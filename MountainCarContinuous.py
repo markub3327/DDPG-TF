@@ -51,7 +51,7 @@ def replace_weights(tau=0.01):
     actorNet_target.model.set_weights(theta_a_targ)
     criticNet_target.model.set_weights(theta_c_targ)
 
-def train(verbose=1, batch_size=128, gamma=0.95):
+def train(verbose=1, batch_size=32, gamma=0.99):
     # ak je dostatok vzorov k uceniu
     if (len(rpm) > batch_size):        
         [s1, a1, r, s2, done] = rpm.sample(batch_size)
@@ -136,8 +136,8 @@ def main():
                 print("Episode finished after {} timesteps".format(step+1))
                 break
 
-            #verbose = 1 if step == 1 else 0    
-        train()
+            verbose = 1 if step == 1 else 0    
+            train(verbose)
 
         # Vypis skore a pridaj do listu
         #print(f"Epsilon: {noise_level}")
