@@ -10,17 +10,17 @@ class Critic:
     def __init__(self, state_shape, action_shape):
         # vstupna vsrtva pre state
         state_input = Input(shape=state_shape)
-        state_h1 = Dense(256, activation='elu', use_bias=True)(state_input)
+        state_h1 = Dense(128, activation='elu', use_bias=True, kernel_initializer='he_uniform', bias_initializer='he_uniform')(state_input)
 
         # vstupna vrstva pre action
         action_input = Input(shape=action_shape)
 
         # equivalent to added = keras.layers.add([x1, x2])
         merged = Concatenate()([state_h1, action_input])
-        merged_h1 = Dense(128, activation='elu', use_bias=True)(merged)
+        merged_h1 = Dense(64, activation='elu', use_bias=True, kernel_initializer='he_uniform', bias_initializer='he_uniform')(merged)
 
         # vystupna vrstva
-        output = Dense(1, activation='linear', use_bias=True)(merged_h1)
+        output = Dense(1, activation='elu', use_bias=True, kernel_initializer='he_uniform', bias_initializer='zeros')(merged_h1)
 
         # Vytvor a skompiluj model
         self.model = Model(inputs=[state_input, action_input], outputs=output)

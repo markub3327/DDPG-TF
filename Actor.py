@@ -9,13 +9,11 @@ class Actor:
 
     def __init__(self, state_space):
         state_input = Input(shape=state_space)
-        i = Dense(256, activation='elu', use_bias=True)(state_input)
-        #i = GaussianNoise(1.0)(i)
-        i = Dense(128, activation='elu', use_bias=True)(i)
-        #i = GaussianNoise(1.0)(i)
-
+        i = Dense(128, activation='elu', use_bias=True, kernel_initializer='he_uniform', bias_initializer='he_uniform')(state_input)
+        i = Dense(64, activation='elu', use_bias=True, kernel_initializer='he_uniform', bias_initializer='he_uniform')(i)
+        
         # vystupna vrstva
-        out = Dense(1, activation='tanh', use_bias=True)(i)
+        out = Dense(1, activation='tanh', use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros')(i)
 
         # Vytvor model
         self.model = Model(inputs=state_input, outputs=out)

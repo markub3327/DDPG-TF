@@ -51,7 +51,7 @@ def replace_weights(tau=0.01):
     actorNet_target.model.set_weights(theta_a_targ)
     criticNet_target.model.set_weights(theta_c_targ)
 
-def train(verbose, batch_size=128, gamma=0.95):
+def train(verbose=1, batch_size=128, gamma=0.95):
     # ak je dostatok vzorov k uceniu
     if (len(rpm) > batch_size):        
         [s1, a1, r, s2, done] = rpm.sample(batch_size)
@@ -82,9 +82,6 @@ def train(verbose, batch_size=128, gamma=0.95):
         actorNet.train(s1, critic_grads)
         
         replace_weights()
-
-def clamper(actions):
-    return np.clip(actions,a_max=env.action_space.high,a_min=env.action_space.low)
 
 def main():
     # list skore
@@ -139,8 +136,8 @@ def main():
                 print("Episode finished after {} timesteps".format(step+1))
                 break
 
-        #verbose = 1 if step == 1 else 0    
-        train(1)#(verbose)
+            #verbose = 1 if step == 1 else 0    
+        train()
 
         # Vypis skore a pridaj do listu
         #print(f"Epsilon: {noise_level}")
