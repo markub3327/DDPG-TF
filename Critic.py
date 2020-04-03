@@ -7,10 +7,10 @@ import numpy as np
 # Trieda hraca
 class Critic:
 
-    def __init__(self, state_shape, action_shape):
+    def __init__(self, state_shape, action_shape, lr=0.001):
         # vstupna vsrtva pre state
         state_input = Input(shape=state_shape)
-        state_h1 = Dense(24, activation='elu', use_bias=True, kernel_initializer='he_uniform')(state_input)
+        state_h1 = Dense(48, activation='elu', use_bias=True, kernel_initializer='he_uniform')(state_input)
 
         # vstupna vrstva pre action
         action_input = Input(shape=action_shape)
@@ -25,7 +25,7 @@ class Critic:
 
         # Vytvor a skompiluj model
         self.model = Model(inputs=[state_input, action_input], outputs=output)
-        self.optimizer = tf.keras.optimizers.Adam()
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
         self.model.compile(optimizer=self.optimizer, loss='mse')
                 
         #self.frozen_model.summary()

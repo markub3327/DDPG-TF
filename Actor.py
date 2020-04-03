@@ -7,9 +7,9 @@ import tensorflow as tf
 # Trieda hraca
 class Actor:
 
-    def __init__(self, state_space):
+    def __init__(self, state_space, lr=0.0001):
         state_input = Input(shape=state_space)
-        i = Dense(24, activation='elu', use_bias=True, kernel_initializer='he_uniform')(state_input)
+        i = Dense(48, activation='elu', use_bias=True, kernel_initializer='he_uniform')(state_input)
         i = Dense(48, activation='elu', use_bias=True, kernel_initializer='he_uniform')(i)
         i = Dense(24, activation='elu', use_bias=True, kernel_initializer='he_uniform')(i)
         
@@ -20,7 +20,7 @@ class Actor:
         self.model = Model(inputs=state_input, outputs=out)
 
         # Skompiluj model
-        self.optimizer = tf.keras.optimizers.Adam()
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
         self.model.compile(optimizer=self.optimizer, loss='mse')
 
         self.model.summary()

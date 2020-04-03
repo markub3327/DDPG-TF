@@ -5,16 +5,27 @@ import Actor
 import Critic
 import ReplayBuffer
 import tensorflow as tf
+import wandb
+from wandb.keras import WandbCallback
+
+# inicializuj prostredie Weights & Biases
+wandb.init(project="mountain-car-continuous")
+
+wandb.config.gamma = 0.95
+wandb.config.batch_size = 64
+wandb.config.tau = 0.01
+wandb.config.lr_A=0.0001
+wandb.config.lr_C=0.001
 
 # Herne prostredie
 env = gym.make('MountainCarContinuous-v0')
 
 # Actor
-actorNet = Actor.Actor(env.observation_space.shape)
+actorNet = Actor.Actor(env.observation_space.shape, lr=wandb.config.lr_A)
 actorNet_target = Actor.Actor(env.observation_space.shape)
 
 # Critic
-criticNet = Critic.Critic(env.observation_space.shape, env.action_space.shape)
+criticNet = Critic.Critic(env.observation_space.shape, env.action_space.shape, lr=wandb.config.lr_C)
 criticNet_target = Critic.Critic(env.observation_space.shape, env.action_space.shape)
 
 # replay buffer
@@ -40,7 +51,7 @@ class OrnsteinUhlenbeckProcess(object):
         return x
 
 # (gradually) replace target network weights with online network weights
-def replace_weights(tau=0.01):
+def replace_weights(tau=wandb.config.tau):
     theta_a,theta_c = actorNet.model.get_weights(),criticNet.model.get_weights()
     theta_a_targ,theta_c_targ = actorNet_target.model.get_weights(),criticNet_target.model.get_weights()
 
@@ -51,7 +62,7 @@ def replace_weights(tau=0.01):
     actorNet_target.model.set_weights(theta_a_targ)
     criticNet_target.model.set_weights(theta_c_targ)
 
-def train(verbose=1, batch_size=64, gamma=0.95):
+def train(verbose=1, batch_size=wandb.config.batch_size, gamma=wandb.config.gamma):
     # ak je dostatok vzorov k uceniu
     if (len(rpm) > batch_size):        
         [s1, a1, r, s2, done] = rpm.sample(batch_size)
@@ -70,12 +81,13 @@ def train(verbose=1, batch_size=64, gamma=0.95):
         #print(q1_target)
 
         #print("Critic network")
-        criticNet.model.fit([s1, a1], q1_target, batch_size=batch_size, epochs=1, verbose=verbose, shuffle=False)
+        criticNet.model.fit([s1, a1], q1_target, batch_size=batch_size, epochs=1, verbose=verbose, shuffle=False, callbacks=[WandbCallback(log_weights=True)])
         # ---------------------------- update actor ---------------------------- #
         with tf.GradientTape() as tape:
             y_pred = actorNet.model(s1)
             q_pred = criticNet.model([s1, y_pred])
         critic_grads = tape.gradient(q_pred, y_pred)
+        wandb.log({"Gradients": wandb.Histogram(-critic_grads)})
         #print(critic_grads)
 
         #print("Actor network")
@@ -142,6 +154,7 @@ def main():
 
         # Vypis skore a pridaj do listu
         #print(f"Epsilon: {noise_level}")
+        wandb.log({"score":score})
         print(f"Score: {score}\n")
         print(f"Episode: {episode}\n")
         scoreList.append(score)
@@ -161,6 +174,10 @@ def main():
 
     actorNet.save()
     criticNet.save()
+
+    # Save model to wandb
+    actorNet.model.save(wandb.os.path.join(wandb.run.dir, "model_A.h5"))
+    criticNet.model.save(wandb.os.path.join(wandb.run.dir, "model_C.h5"))
 
     # zatvor prostredie
     env.close()
