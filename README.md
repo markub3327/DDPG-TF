@@ -10,6 +10,15 @@ https://towardsdatascience.com/hyper-parameters-in-action-part-ii-weight-initial
 <br><br>
 https://spinningup.openai.com/en/latest/algorithms/ddpg.html
 
+<p align="center"><b>Actor topology</b></p>
+<p align="center">
+  <img src="model_A.png" alt="Actor">
+</p>
+
+<p align="center"><b>Critic topology</b></p>
+<p align="center">
+  <img src="model_C.png" alt="Critic">
+</p>
 
 ## Inputs/Outputs
 
@@ -33,6 +42,8 @@ The Critic network is trained by Bellman equation:
     gamma          ->  discount factor,
     Q_next_state   ->  quality of action in next state 
     done           ->  1, if it's terminal state or 0 in non-terminal state
+
+![graph](result.png)
 
 **Framework:** Tensorflow 2.0
 </br>
