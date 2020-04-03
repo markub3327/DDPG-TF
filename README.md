@@ -43,7 +43,11 @@ The Critic network is trained by Bellman equation:
     Q_next_state   ->  quality of action in next state 
     done           ->  1, if it's terminal state or 0 in non-terminal state
 
-![graph](result.png)
+<p align="center"><b>Summary</b></p>
+<p align="center">
+  <img src="result.png" alt="Critic">
+</p>
+<p align="center"><a href="https://app.wandb.ai/markub/mountain-car-continuous/runs/3i2z875k">For more charts click here.</a></p>
 
 **Framework:** Tensorflow 2.0
 </br>
