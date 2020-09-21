@@ -1,5 +1,14 @@
 # MountainCarContinuous
 
+[![Release](https://img.shields.io/github/release/markub3327/MountainCarContinuous)](https://github.com/markub3327/MountainCarContinuous/releases)
+![Tag](https://img.shields.io/github/v/tag/markub3327/MountainCarContinuous)
+
+[![Issues](https://img.shields.io/github/issues/markub3327/MountainCarContinuous)](https://github.com/markub3327/MountainCarContinuous/issues)
+![Commits](https://img.shields.io/github/commit-activity/w/markub3327/MountainCarContinuous)
+
+![Languages](https://img.shields.io/github/languages/count/markub3327/MountainCarContinuous)
+![Size](https://img.shields.io/github/repo-size/markub3327/MountainCarContinuous)
+
 ## Theory
 
 &emsp;**Agent** is using DDPG algorithm to predict continuous actions in continuous state space. It has two networks: Actor and Critic.
