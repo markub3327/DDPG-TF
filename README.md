@@ -1,4 +1,4 @@
-# MountainCarContinuous
+# Mountain car - continuous
 
 [![Release](https://img.shields.io/github/release/markub3327/MountainCarContinuous)](https://github.com/markub3327/MountainCarContinuous/releases)
 ![Tag](https://img.shields.io/github/v/tag/markub3327/MountainCarContinuous)
