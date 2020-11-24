@@ -13,10 +13,10 @@ from noise import OrnsteinUhlenbeckActionNoise
 # inicializuj prostredie Weights & Biases
 wandb.init(project="stable-baselines")
 
-wandb.config.gamma = 0.98
+wandb.config.gamma = 0.99
 wandb.config.batch_size = 100
 wandb.config.tau = 0.005
-wandb.config.lr_A=0.001
+wandb.config.lr_A=0.0001
 wandb.config.lr_C=0.001
 wandb.config.learning_start = 100
 
@@ -70,7 +70,8 @@ def train(verbose=1, batch_size=wandb.config.batch_size, gamma=wandb.config.gamm
         criticNet.model.fit([s1, a1], q1_target, batch_size=batch_size, epochs=1, verbose=verbose, shuffle=False, callbacks=[WandbCallback()])
         # ---------------------------- update actor ---------------------------- #
         #print("Actor network")
-        actorNet.train(s1, criticNet.model)
+        loss_a = actorNet.train(s1, criticNet.model)
+        wandb.log({'loss_a': loss_a})
         
         replace_weights()
 

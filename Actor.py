@@ -27,16 +27,16 @@ class Actor:
     @tf.function
     def train(self, X_train, criticNet):
         with tf.GradientTape() as tape:
-            y_pred = self.model(X_train)
-            q_pred = criticNet([X_train, y_pred])
-        critic_grads = tape.gradient(q_pred, y_pred)
-
-        # gradiendy siete
-        with tf.GradientTape() as tape:
             y_pred = self.model(X_train, training=True)
-        actor_grads = tape.gradient(y_pred, self.model.trainable_variables, output_gradients=-critic_grads)
+            q_pred = criticNet([X_train, y_pred])
+
+            loss_a = -tf.reduce_mean(q_pred)
+
+        actor_grads = tape.gradient(loss_a, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(actor_grads, self.model.trainable_variables))
         #print(actor_grads)
+
+        return loss_a
 
     def save(self):
         plot_model(self.model, to_file='model_A.png')
