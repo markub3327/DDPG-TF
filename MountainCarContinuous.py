@@ -6,49 +6,35 @@ import Critic
 import ReplayBuffer
 import tensorflow as tf
 import wandb
+
 from wandb.keras import WandbCallback
+from noise import OrnsteinUhlenbeckActionNoise
 
 # inicializuj prostredie Weights & Biases
-wandb.init(project="mountain-car-continuous")
+wandb.init(project="stable-baselines")
 
-wandb.config.gamma = 0.95
-wandb.config.batch_size = 64
-wandb.config.tau = 0.01
-wandb.config.lr_A=0.0001
+wandb.config.gamma = 0.98
+wandb.config.batch_size = 100
+wandb.config.tau = 0.005
+wandb.config.lr_A=0.001
 wandb.config.lr_C=0.001
+wandb.config.learning_start = 100
 
 # Herne prostredie
 env = gym.make('MountainCarContinuous-v0')
 
 # Actor
-actorNet = Actor.Actor(env.observation_space.shape, lr=wandb.config.lr_A)
-actorNet_target = Actor.Actor(env.observation_space.shape)
+actorNet = Actor.Actor(env.observation_space.shape, env.action_space.shape, lr=wandb.config.lr_A)
+actorNet_target = Actor.Actor(env.observation_space.shape, env.action_space.shape, lr=wandb.config.lr_A)
 
 # Critic
 criticNet = Critic.Critic(env.observation_space.shape, env.action_space.shape, lr=wandb.config.lr_C)
-criticNet_target = Critic.Critic(env.observation_space.shape, env.action_space.shape)
+criticNet_target = Critic.Critic(env.observation_space.shape, env.action_space.shape, lr=wandb.config.lr_C)
 
 # replay buffer
 rpm = ReplayBuffer.ReplayBuffer(1000000) # 1M history
 
-class OrnsteinUhlenbeckProcess(object):
-    """ Ornstein-Uhlenbeck Noise (original code by @slowbull)
-    """
-    def __init__(self, theta=0.15, mu=0, sigma=1, x0=0, dt=1e-2, n_steps_annealing=250, size=1):
-        self.theta = theta
-        self.sigma = sigma
-        self.n_steps_annealing = n_steps_annealing
-        self.sigma_step = - self.sigma / float(self.n_steps_annealing)
-        self.x0 = x0
-        self.mu = mu
-        self.dt = dt
-        self.size = size
-
-    def generate(self, step):
-        sigma = max(0, self.sigma_step * step + self.sigma)
-        x = self.x0 + self.theta * (self.mu - self.x0) * self.dt + sigma * np.sqrt(self.dt) * np.random.normal(size=self.size)
-        self.x0 = x
-        return x
+noise = OrnsteinUhlenbeckActionNoise(mean=0.0, sigma=0.5, size=env.action_space.shape)
 
 # (gradually) replace target network weights with online network weights
 def replace_weights(tau=wandb.config.tau):
@@ -70,28 +56,21 @@ def train(verbose=1, batch_size=wandb.config.batch_size, gamma=wandb.config.gamm
 
         # ---------------------------- update critic ---------------------------- #
         # a2_targ = actor_targ(s2) : what will you do in s2, Mr. old actor?
-        a2 = actorNet_target.model.predict(s2)
+        a2 = actorNet_target.model(s2)
         #print(s2)
 
         # q2_targ = critic_targ(s2,a2) : how good is action a2, Mr. old critic?
-        q2 = criticNet_target.model.predict([s2, a2])
+        q2 = criticNet_target.model([s2, a2])
 
         # Use Bellman Equation! (recursive definition of q-values)
         q1_target = r + (1-done) * gamma * q2
         #print(q1_target)
 
         #print("Critic network")
-        criticNet.model.fit([s1, a1], q1_target, batch_size=batch_size, epochs=1, verbose=verbose, shuffle=False, callbacks=[WandbCallback(log_weights=True)])
+        criticNet.model.fit([s1, a1], q1_target, batch_size=batch_size, epochs=1, verbose=verbose, shuffle=False, callbacks=[WandbCallback()])
         # ---------------------------- update actor ---------------------------- #
-        with tf.GradientTape() as tape:
-            y_pred = actorNet.model(s1)
-            q_pred = criticNet.model([s1, y_pred])
-        critic_grads = tape.gradient(q_pred, y_pred)
-        wandb.log({"Gradients": wandb.Histogram(-critic_grads)})
-        #print(critic_grads)
-
         #print("Actor network")
-        actorNet.train(s1, critic_grads)
+        actorNet.train(s1, criticNet.model)
         
         replace_weights()
 
@@ -108,27 +87,26 @@ def main():
         state = env.reset()
         state = np.reshape(state, (1, env.observation_space.shape[0]))
 
-        noise = OrnsteinUhlenbeckProcess(size=env.action_space.shape)
+        noise.reset()
 
         # kroky v hre (epizody)
         score = 0.0
-        for step in range(200):
+        for step in range(1500):
             # prekresli okno hry
             env.render()
 
-            # add noise to our actions, since our policy by nature is deterministic
-            exploration_noise = noise.generate(episode)
-            
-            action = np.squeeze(actorNet.model(state))
-            # Clip continuous values to be valid w.r.t. environment
-            action = np.clip(action+exploration_noise, -1.0, 1.0)
+            if (len(rpm) < wandb.config.learning_start):
+                action = env.action_space.sample()
+            else:
+                action = actorNet.model(state)[0]
+                # Clip continuous values to be valid w.r.t. environment
+                action = np.clip(action + noise(), -1.0, 1.0)
             
             # krok hry
             newState, reward, done, info = env.step(action) 
             newState = np.reshape(newState, (1, env.observation_space.shape[0]))
 
             if (step == 1):
-                print("exploration_noise: {}".format(exploration_noise))
                 print(f"State: {state}")  # stav v hre
                 print(f"Action: {action}")
                 print(f"Reward: {reward}")
@@ -148,15 +126,17 @@ def main():
                 print("Episode finished after {} timesteps\n".format(step+1))
                 break
 
-            # musi sa ucit za kazdou iteraciou   
-            verbose = 1 if step == 1 else 0    
-            train(verbose)
+            # musi sa ucit za kazdou iteraciou
+            if (len(rpm) >= wandb.config.learning_start):
+                verbose = 1 if step == 1 else 0
+                train(verbose)
 
         # Vypis skore a pridaj do listu
         #print(f"Epsilon: {noise_level}")
         wandb.log({"score":score})
         print(f"Score: {score}\n")
         print(f"Episode: {episode}\n")
+        print(f"Steps: {step}")
         scoreList.append(score)
 
     # nastav graf
