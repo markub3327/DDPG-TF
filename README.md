@@ -31,16 +31,9 @@ https://spinningup.openai.com/en/latest/algorithms/ddpg.html
 
 ## Inputs/Outputs
 
-&emsp;The Actor network has 2 inputs from game: position, velocity. The output layer consists from fully-connected 'tanh()' layer for doing actions in range (-1.0, 1.0): force. Hidden layers are using Exponential linear unit (ELU) function.
+&emsp;The Actor network has 2 inputs from game: position, velocity. The output layer consists from fully-connected 'tanh()' layer for doing actions in range (-1.0, 1.0): force. Hidden layers are using ReLU function.
 
-&emsp;The Critic network has 2 inputs from game (states) and 1 input from Actor network (action). The main function of this network is estimate quality of the action[t] in the state[t] and use it to change gradient of Actor network by equation: 
-
-    grad_J = (dQ / daction) * (daction / dA)
-
-    grad_J ->  policy gradient,
-    Q      ->  Q value from Critic net on (state, action) pair,
-    action ->  deterministic policy predicated by Actor,
-    A      ->  Actor's weights
+&emsp;The Critic network has 2 inputs from game (states) and 1 input from Actor network (action). Hidden layers are using ReLU function. The main function of this network is estimate quality of the action[t] in the state[t].
 
 The Critic network is trained by Bellman equation:
     
