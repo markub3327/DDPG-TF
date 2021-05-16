@@ -1,4 +1,4 @@
-# Mountain car - continuous
+# Deep Deterministic Policy Gradient (DDPG)
 
 [![Release](https://img.shields.io/github/release/markub3327/MountainCarContinuous)](https://github.com/markub3327/MountainCarContinuous/releases)
 ![Tag](https://img.shields.io/github/v/tag/markub3327/MountainCarContinuous)
@@ -49,7 +49,6 @@ The Critic network is trained by Bellman equation:
 <p align="center">
   <img src="result.png" alt="Critic">
 </p>
-<p align="center"><a href="https://app.wandb.ai/markub/mountain-car-continuous/runs/3i2z875k">For more charts click here.</a></p>
 
 **Framework:** Tensorflow 2.0
 </br>
